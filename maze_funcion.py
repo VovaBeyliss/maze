@@ -3,6 +3,7 @@ from data import *
 
 class Sprite(pygame.Rect):
     def __init__(self, x, y, width, height, color= (120,120,120), image= None, speed= 5):
+        super().__init__(x, y, width, height)
         self.COLOR = color
         self.IMAGE_LIST = image
         self.IMAGE = self.IMAGE_LIST[1]
@@ -22,11 +23,14 @@ class HERO(Sprite):
             super().__init__(x, y, width, height, color, image, speed)
             self.MOVE = {"UP": False, "DOWN": False, "LEFT": False, "RIGHT": False}
             self.DIRECTION = False
+            self.HP = 3
 
     def move(self, window):
+        print(self.x, self.y)
         if self.MOVE["UP"] and self.y > 0:
             self.y -= self.SPEED
             if self.collidelist(wall_list) != -1:
+                print("1")
                 self.y += self.SPEED
         elif self.MOVE["DOWN"] and self.y < setting_win["HEIGHT"] - self.height:
             self.y += self.SPEED
@@ -35,18 +39,18 @@ class HERO(Sprite):
         if self.MOVE["LEFT"]and self.x > 0:
             self.x -= self.SPEED
             if self.collidelist(wall_list) != -1:
-                self.y += self.SPEED
+                self.x += self.SPEED
             self.DIRECTION = False
         elif self.MOVE["RIGHT"] and self.x < setting_win["WIDTH"] - self.width:
             self.x += self.SPEED
             if self.collidelist(wall_list) != -1:
-                self.y -= self.SPEED
+                self.x -= self.SPEED
             self.DIRECTION = True
         
         if self.MOVE["UP"] or self.MOVE["DOWN"] or self.MOVE["LEFT"] or self.MOVE["RIGHT"]:
             self.move_image()
         else:
-             self.IMAGE_NOW = self.IMAGE_LIST[1]
+             self.IMAGE = self.IMAGE_LIST[1]
 
         if self.DIRECTION:
             self.IMAGE_NOW = pygame.transform.flip(self.IMAGE, True, False)
@@ -63,7 +67,7 @@ class Bot(Sprite):
             self.horizontal = horizontal
             self.BULLET = pygame.Rect(self.x, self.y + self.height // 2, 20, 10)
 
-    def move(self, window):
+    def move(self, window, hero):
         if self.horizontal:
             self.x += self.SPEED
             if self.collidelist(wall_list) != -1 or self.x < 0 or self.x + self.width > setting_win["WIDTH"]:
@@ -74,14 +78,23 @@ class Bot(Sprite):
                 self.SPEED *= -1
         self.move_image()
         window.blit(self.IMAGE, (self.x , self.y))
+        self.check_hero(hero, self)
 
     def shoot(self, window, hero):
         self.BULLET.x -= self.SPEED
         if self.BULLET.collidelist(wall_list) != -1 or self.BULLET.x < 0 or self.BULLET.colliderect(hero):
+            self.check_hero(hero, self.BULLET)
             self.BULLET.x = self.x
         pygame.draw.rect(window, (255, 255, 0) , self.BULLET)
         self.move_image()
         window.blit(self.IMAGE, (self.x, self.y))
+
+
+    def check_hero(self, hero, bot):
+
+        if bot.colliderect(hero):
+            hero.x, hero.y = 10, 10
+            hero.HP -= 1
 
 def create_wall(key):
     x, y = 0, 0
@@ -108,6 +121,8 @@ def create_wall(key):
         y += width
 
 create_wall("MAP1")
+for wall in wall_list:
+    print(wall.x, wall.y, wall.width, wall.height)
 
 
 
